@@ -1,0 +1,24 @@
+{
+  "name": "future_commit",
+  "version": "0.0.1",
+  "description": "Use future date while making git commits",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "ncc build index.js -o build",
+    "package": "pkg -t linux,macos ./build/index.js --output dist/future-commit"
+  },
+  "author": "raevilman",
+  "license": "ISC",
+  "bin": {
+    "future-commit": "index.js"
+  },
+  "dependencies": {
+    "parse-duration": "^1.0.2",
+    "yesno": "^0.4.0"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.34.0",
+    "pkg": "^5.8.0"
+  }
+}
