@@ -1,4 +1,4 @@
-#! /usr/bin/env node
+#!/usr/bin/env bash
 const spawn = require("child_process").spawn
 const yesno = require("yesno");
 const parse = require("parse-duration");
