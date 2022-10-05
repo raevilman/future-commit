@@ -14,3 +14,11 @@ brew install future-commit
 # Demo
 
 ![](./assets/demo.gif)
+
+</br>
+</br>
+</br>
+---
+
+### Learn to create your own Homebrew Formula
+[Video link](https://youtu.be/Oe0DOpG0GpQ)
