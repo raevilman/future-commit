@@ -1,138 +1,161 @@
 #!/usr/bin/env node
-const spawn = require("child_process").spawn
-const yesno = require("yesno");
-const parse = require("parse-duration");
 
-// Main execution function
-function main() {
-  const myArgs = process.argv.slice(2);
+const yesno = require('yesno');
+const { execSync } = require('child_process');
 
-  if(!myArgs || myArgs.length < 1) exitPrintingHelp();
-
-  // process args
-  const firstArg = myArgs[0];
-  myArgs.shift();
-  myArgs.unshift("commit");
-
-  // parse time
-  const msShift = parse(firstArg);
-  if (!msShift) {
-    exitPrintingHelp("Invalid time format");
-  }
-
-  // prepare future date
-  const nowMillis = Date.now();
-  const futureMillis =
-    msShift && !isNaN(msShift) ? nowMillis + msShift : nowMillis;
-  const futureDate = new Date(futureMillis);
-
-  // confirm and commit
-  seekConfirmation(futureDate, myArgs);
-}
-
-// Parse time string and return milliseconds
-function parseTimeString(timeString) {
-  return parse(timeString);
-}
-
-// Calculate future date from current time and offset
-function calculateFutureDate(timeOffsetMs, currentTime = Date.now()) {
-  if (timeOffsetMs === null || timeOffsetMs === undefined || isNaN(timeOffsetMs)) {
+/**
+ * Parse duration string into milliseconds
+ * Supports formats like: 1h, 30m, 45s, 2d, 1h30m, 2d5h30m
+ */
+function parseDuration(str) {
+  if (!str || typeof str !== 'string') {
     return null;
   }
-  return new Date(currentTime + timeOffsetMs);
-}
 
+  const units = {
+    d: 24 * 60 * 60 * 1000, // days to milliseconds
+    h: 60 * 60 * 1000,      // hours to milliseconds
+    m: 60 * 1000,           // minutes to milliseconds
+    s: 1000                 // seconds to milliseconds
+  };
 
-// functions below
+  let totalMs = 0;
+  const regex = /(\d+(?:\.\d+)?)\s*([dhms])/gi;
+  let match;
+  let hasMatch = false;
 
-// prompt to confirm
-async function seekConfirmation(futureDate, gitArgs) {
-  console.log("Commit time: ", futureDate.toLocaleString());
-  const ok = await yesno({
-    question: "Continue?",
-  });
-  if (ok) gitCommit(futureDate, gitArgs);
-}
-
-// run git command
-function gitCommit(futureDate, gitArgs) {
-  // Git format
-  // GIT_AUTHOR_DATE='2021-12-21 21:03' GIT_COMMITTER_DATE='2021-12-21 21:03' git commit -m 'msg'
-  
-  const formattedDateWithQuotes = "'" + formatDate(futureDate) + "'";
-
-  try {
-    var child = spawn("git", gitArgs, {
-      env: {
-        ...process.env,
-        GIT_AUTHOR_DATE: formattedDateWithQuotes,
-        GIT_COMMITTER_DATE: formattedDateWithQuotes,
-      },
-    });
-
-    //spit stdout to screen
-    child.stdout.on("data", function (data) {
-      process.stdout.write(data.toString());
-    });
-
-    //spit stderr to screen
-    child.stderr.on("data", function (data) {
-      process.stdout.write(data.toString());
-    });
-
-    child.on("close", function (code) {
-      console.log(code === 0 ? "See you in the future!": "Back to present!");
-    });
-  } catch (error) {
-    console.log(error);
+  while ((match = regex.exec(str)) !== null) {
+    hasMatch = true;
+    const value = parseFloat(match[1]);
+    const unit = match[2].toLowerCase();
+    
+    if (units[unit]) {
+      totalMs += value * units[unit];
+    }
   }
+
+  return hasMatch ? totalMs : null;
 }
 
-// function to format date in '2021-12-21 21:03' format
 function formatDate(date) {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return null;
+  }
+  
   const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  const hours = date.getHours();
-  const minutes = date.getMinutes();
-  return `${year}-${month}-${day} ${hours}:${minutes}`;
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
-function exitPrintingHelp(msg) {
-  if (msg) {
-    console.log("");
-    console.log("Error: " + msg);
-    console.log("");
+function parseTimeString(timeStr) {
+  if (!timeStr) {
+    return null;
+  }
+  
+  const milliseconds = parseDuration(timeStr);
+  return milliseconds;
+}
+
+function calculateFutureDate(offsetMs, currentTime = Date.now()) {
+  if (typeof offsetMs !== 'number' || isNaN(offsetMs) || offsetMs < 0) {
+    return null;
+  }
+  
+  if (typeof currentTime !== 'number' || isNaN(currentTime)) {
+    return null;
+  }
+  
+  return new Date(currentTime + offsetMs);
+}
+
+function printHelp() {
+  console.log(`
+Usage: future-commit <time> [git commit arguments]
+
+Examples:
+  future-commit 1h -m "Commit message"
+  future-commit 30m -a -m "Auto-add and commit"
+  future-commit 2d --amend
+  future-commit 1h30m -m "Complex time format"
+
+Time formats:
+  - s: seconds (e.g., 30s)
+  - m: minutes (e.g., 45m)
+  - h: hours (e.g., 2h)
+  - d: days (e.g., 1d)
+  - Combined: (e.g., 1h30m, 2d5h)
+
+The tool will set the commit date to the specified time in the future.
+  `);
+}
+
+function exitPrintingHelp(message) {
+  if (message) {
+    console.error(`Error: ${message}`);
   }
   printHelp();
   process.exit(1);
 }
 
-function printHelp() {
-  console.log("-------------------");
-  console.log("Usage: future-commit <time> -m <message>");
-  console.log('Example: future-commit 1h -m "Commit message"');
-  console.log('Example: future-commit 1h30m -m "Commit message"');
-  // log blank line
-  console.log("");
-  console.log(
-    "Tip: You can pass any other git commit arguments after the time"
-  );
-  console.log("-------------------");
+async function main() {
+  const args = process.argv.slice(2);
+  
+  if (args.length === 0 || args[0] === '--help' || args[0] === '-h') {
+    printHelp();
+    return;
+  }
+  
+  const timeStr = args[0];
+  const gitArgs = args.slice(1);
+  
+  const offsetMs = parseTimeString(timeStr);
+  if (offsetMs === null) {
+    exitPrintingHelp(`Invalid time format: ${timeStr}`);
+    return;
+  }
+  
+  const futureDate = calculateFutureDate(offsetMs);
+  const formattedDate = formatDate(futureDate);
+  
+  console.log(`Future commit will be dated: ${formattedDate}`);
+  
+  const ok = await yesno({
+    question: 'Proceed with commit? (y/n)'
+  });
+  
+  if (!ok) {
+    console.log('Commit cancelled.');
+    return;
+  }
+  
+  try {
+    const gitCommand = `git commit --date="${formattedDate}" ${gitArgs.join(' ')}`;
+    console.log(`Running: ${gitCommand}`);
+    execSync(gitCommand, { stdio: 'inherit' });
+    console.log('Commit successful!');
+  } catch (error) {
+    console.error('Git commit failed:', error.message);
+    process.exit(1);
+  }
 }
 
 // Export functions for testing
 module.exports = {
+  parseDuration,
   formatDate,
   parseTimeString,
   calculateFutureDate,
-  exitPrintingHelp,
   printHelp,
+  exitPrintingHelp,
   main
 };
 
-// Run main function if this file is executed directly
+// Run if called directly
 if (require.main === module) {
-  main();
+  main().catch(console.error);
 }

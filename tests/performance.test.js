@@ -1,4 +1,9 @@
-const { formatDate, parseTimeString, calculateFutureDate } = require('../index.js');
+const {
+  parseDuration,
+  formatDate,
+  parseTimeString,
+  calculateFutureDate
+} = require('../index.js');
 
 describe('Performance tests', () => {
   

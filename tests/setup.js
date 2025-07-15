@@ -29,5 +29,4 @@ afterAll(() => {
   process.exit = originalExit;
 });
 
-// Set test timeout for longer integration tests
-jest.setTimeout(10000);
+// Set test timeout for longer integration tests - moved to Jest config
