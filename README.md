@@ -1,6 +1,9 @@
 # What?
 A tiny utility to `git commit` in the future.  
 
+[![Release](https://img.shields.io/github/v/release/raevilman/future-commit)](https://github.com/raevilman/future-commit/releases)
+[![Tests](https://img.shields.io/badge/tests-40%20passing-green)](./docs/testing.md)
+[![Coverage](https://img.shields.io/badge/coverage-52.3%25-yellow)](./docs/testing.md)
 
 
 # Install
@@ -110,4 +113,31 @@ VERBOSE_TESTS=1 npm test
 To test without actual git commits:
 ```bash
 node index.js 1h -m "test" --dry-run
+```
+
+## 📦 Releases
+
+This project uses semantic versioning. Each release includes:
+- **Comprehensive release notes** with detailed changelogs
+- **Pre-built binaries** for multiple platforms
+- **Test coverage reports** and quality metrics
+- **Migration guides** for breaking changes
+
+### Latest Release: v0.2.0
+- **Package updates**: All dependencies updated to latest stable versions
+- **Custom duration parser**: Eliminated external dependency
+- **Comprehensive test suite**: 40 tests with 100% pass rate
+- **Enhanced user experience**: Better error handling and CLI feedback
+
+See [Releases](https://github.com/raevilman/future-commit/releases) for complete changelog and download links.
+
+### Creating Releases
+For maintainers, releases can be created using:
+```bash
+# Using GitHub CLI (recommended)
+./scripts/create-release.sh v0.2.0
+
+# Or manually via GitHub Actions on tag push
+git tag v0.2.0
+git push origin v0.2.0
 ```
