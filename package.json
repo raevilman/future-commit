@@ -8,7 +8,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "build": "ncc build index.js -o build",
-    "package": "pkg . -t linux --output dist/future-commit"
+    "package": "pkg . -t node18-macos,node18-linux --out-path dist"
   },
   "author": "raevilman",
   "license": "ISC",
@@ -24,7 +24,10 @@
     "pkg": "^5.8.1"
   },
   "pkg": {
-    "scripts": "build/**/*.js"
+    "scripts": "build/**/*.js",
+    "targets": [
+      "node18"
+    ]
   },
   "jest": {
     "testEnvironment": "node",
