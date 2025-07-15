@@ -1,55 +1,69 @@
-#!/usr/bin/env bash
+#!/usr/bin/env node
 const spawn = require("child_process").spawn
 const yesno = require("yesno");
 const parse = require("parse-duration");
-// import { spawn } from "child_process";
-// import parse from "parse-duration";
-// import yesno from "yesno";
-const myArgs = process.argv.slice(2);
 
-if(!myArgs || myArgs.length < 1) exitPrintingHelp();
+// Main execution function
+function main() {
+  const myArgs = process.argv.slice(2);
 
-// process args
-const firstArg = myArgs[0];
-myArgs.shift();
-myArgs.unshift("commit");
+  if(!myArgs || myArgs.length < 1) exitPrintingHelp();
 
-// parse time
-const msShift = parse(firstArg);
-if (!msShift) {
-  exitPrintingHelp("Invalid time format");
+  // process args
+  const firstArg = myArgs[0];
+  myArgs.shift();
+  myArgs.unshift("commit");
+
+  // parse time
+  const msShift = parse(firstArg);
+  if (!msShift) {
+    exitPrintingHelp("Invalid time format");
+  }
+
+  // prepare future date
+  const nowMillis = Date.now();
+  const futureMillis =
+    msShift && !isNaN(msShift) ? nowMillis + msShift : nowMillis;
+  const futureDate = new Date(futureMillis);
+
+  // confirm and commit
+  seekConfirmation(futureDate, myArgs);
 }
 
-// prepare future date
-const nowMillis = Date.now();
-const futureMillis =
-  msShift && !isNaN(msShift) ? nowMillis + msShift : nowMillis;
-const futureDate = new Date(futureMillis);
+// Parse time string and return milliseconds
+function parseTimeString(timeString) {
+  return parse(timeString);
+}
 
-// confirm and commit
-seekConfirmation(futureDate);
+// Calculate future date from current time and offset
+function calculateFutureDate(timeOffsetMs, currentTime = Date.now()) {
+  if (timeOffsetMs === null || timeOffsetMs === undefined || isNaN(timeOffsetMs)) {
+    return null;
+  }
+  return new Date(currentTime + timeOffsetMs);
+}
 
 
 // functions below
 
 // prompt to confirm
-async function seekConfirmation(futureDate) {
+async function seekConfirmation(futureDate, gitArgs) {
   console.log("Commit time: ", futureDate.toLocaleString());
   const ok = await yesno({
     question: "Continue?",
   });
-  if (ok) gitCommit();
+  if (ok) gitCommit(futureDate, gitArgs);
 }
 
 // run git command
-function gitCommit() {
+function gitCommit(futureDate, gitArgs) {
   // Git format
   // GIT_AUTHOR_DATE='2021-12-21 21:03' GIT_COMMITTER_DATE='2021-12-21 21:03' git commit -m 'msg'
   
   const formattedDateWithQuotes = "'" + formatDate(futureDate) + "'";
 
   try {
-    var child = spawn("git", myArgs, {
+    var child = spawn("git", gitArgs, {
       env: {
         ...process.env,
         GIT_AUTHOR_DATE: formattedDateWithQuotes,
@@ -106,4 +120,19 @@ function printHelp() {
     "Tip: You can pass any other git commit arguments after the time"
   );
   console.log("-------------------");
+}
+
+// Export functions for testing
+module.exports = {
+  formatDate,
+  parseTimeString,
+  calculateFutureDate,
+  exitPrintingHelp,
+  printHelp,
+  main
+};
+
+// Run main function if this file is executed directly
+if (require.main === module) {
+  main();
 }
