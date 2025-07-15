@@ -1,10 +1,12 @@
 {
   "name": "future_commit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Use future date while making git commits",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "build": "ncc build index.js -o build",
     "package": "pkg . -t linux --output dist/future-commit"
   },
@@ -14,14 +16,35 @@
     "future-commit": "./build/index.js"
   },
   "dependencies": {
-    "parse-duration": "^1.0.2",
     "yesno": "^0.4.0"
   },
   "devDependencies": {
-    "@vercel/ncc": "^0.34.0",
-    "pkg": "^5.8.0"
+    "@vercel/ncc": "^0.38.3",
+    "jest": "^29.7.0",
+    "pkg": "^5.8.1"
   },
   "pkg": {
     "scripts": "build/**/*.js"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/setup.js"
+    ],
+    "collectCoverageFrom": [
+      "*.js",
+      "!build/**",
+      "!dist/**"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ],
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "testTimeout": 10000
   }
 }
