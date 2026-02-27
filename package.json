@@ -1,6 +1,6 @@
 {
   "name": "future_commit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Use future date while making git commits",
   "main": "index.js",
   "scripts": {

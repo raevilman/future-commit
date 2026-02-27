@@ -134,7 +134,8 @@ async function main() {
   }
   
   try {
-    const gitCommand = `git commit --date="${formattedDate}" ${gitArgs.join(' ')}`;
+    const quotedArgs = gitArgs.map(arg => arg.includes(' ') ? `"${arg}"` : arg);
+    const gitCommand = `git commit --date="${formattedDate}" ${quotedArgs.join(' ')}`;
     console.log(`Running: ${gitCommand}`);
     execSync(gitCommand, { stdio: 'inherit' });
     console.log('Commit successful!');
